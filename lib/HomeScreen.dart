@@ -1,4 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:ocr_app/CartScanner.dart';
+import 'package:ocr_app/RecognizerScreen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -8,6 +13,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late ImagePicker imagePicker;
+  @override
+  void initState() {
+    super.initState();
+    imagePicker = ImagePicker();
+  }
+
+  bool scan = false;
+  bool recognition = true;
+  bool enhance = false;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -24,55 +40,82 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   InkWell(
-                    child: const Column(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.scanner,
                           size: 25,
-                          color: Colors.white,
+                          color: scan ? Colors.white : Colors.grey.shade700,
                         ),
                         Text(
                           'Scan',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                              color:
+                                  scan ? Colors.white : Colors.grey.shade700),
                         ),
                       ],
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      setState(() {
+                        scan = true;
+                        recognition = false;
+                        enhance = false;
+                      });
+                    },
                   ),
                   InkWell(
-                    child: const Column(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.document_scanner_outlined,
                           size: 25,
-                          color: Colors.white,
+                          color:
+                              recognition ? Colors.white : Colors.grey.shade700,
                         ),
                         Text(
                           'Recognition',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                              color: recognition
+                                  ? Colors.white
+                                  : Colors.grey.shade700),
                         ),
                       ],
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      setState(() {
+                        scan = false;
+                        recognition = true;
+                        enhance = false;
+                      });
+                    },
                   ),
                   InkWell(
-                    child: const Column(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.adf_scanner,
                           size: 25,
-                          color: Colors.white,
+                          color: enhance ? Colors.white : Colors.grey.shade700,
                         ),
                         Text(
                           'Enhance',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                              color: enhance
+                                  ? Colors.white
+                                  : Colors.grey.shade700),
                         ),
                       ],
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      setState(() {
+                        scan = false;
+                        recognition = false;
+                        enhance = true;
+                      });
+                    },
                   ),
                 ],
               ),
@@ -81,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Card(
             color: Colors.black,
             child: Container(
-              height: MediaQuery.of(context).size.height - 270,
+              height: MediaQuery.of(context).size.height - 300,
             ),
           ),
           Card(
@@ -113,7 +156,32 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: 30,
                       color: Colors.white,
                     ),
-                    onTap: () {},
+                    onTap: () async {
+                      XFile? xfile = await imagePicker.pickImage(
+                          source: ImageSource.gallery);
+                      if (xfile != null) {
+                        File image = File(xfile.path);
+                        if (recognition) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (ctx) {
+                                return RecognizerScreen(image);
+                              },
+                            ),
+                          );
+                        } else if(scan){
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (ctx) {
+                                return CardScanner(image);
+                              },
+                            ),
+                          );
+                        }
+                      }
+                    },
                   ),
                 ],
               ),
