@@ -104,7 +104,7 @@ class _RecognizerScreenState extends State<RecognizerScreen> {
                     ),
                     Text(
                       results,
-                      style: const TextStyle(fontSize: 18),
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ],
                 ),

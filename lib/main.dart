@@ -1,5 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:ocr_app/HomeScreen.dart';
+import 'package:ocr_app/homescreen.dart';
 
 void main() {
   runApp(const MyApp());

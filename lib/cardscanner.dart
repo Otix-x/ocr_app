@@ -1,14 +1,15 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_entity_extraction/google_mlkit_entity_extraction.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:ocr_app/helper/database_helper.dart';
+import 'package:ocr_app/viewdatabasescreen.dart';
 
 class CardScanner extends StatefulWidget {
   File image;
-  CardScanner(this.image, {super.key});
+  CardScanner(this.image);
 
   @override
   State<CardScanner> createState() => _CardScannerState();
@@ -47,7 +48,7 @@ class _CardScannerState extends State<CardScanner> {
       annotation.end;
       annotation.text;
       for (final entity in annotation.entities) {
-        results += "${entity.type.name}\n${annotation.text}\n\n";
+        results += entity.type.name + "\n" + annotation.text + "\n\n";
         entitiesList.add(
           EntityDM(entity.type.name, annotation.text),
         );
@@ -60,6 +61,15 @@ class _CardScannerState extends State<CardScanner> {
     });
   }
 
+  _importToDatabase() async {
+    for (var entity in entitiesList) {
+      await DatabaseHelper().insertCardData(entity.name, entity.value);
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Data imported to database successfully!")),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,7 +79,7 @@ class _CardScannerState extends State<CardScanner> {
           'Card Scanner',
           style: TextStyle(color: Colors.white),
         ),
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         child: Container(
@@ -86,7 +96,7 @@ class _CardScannerState extends State<CardScanner> {
                       child: Padding(
                         padding: const EdgeInsets.only(left: 10, right: 10),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             Icon(
                               entitiesList[position].iconData,
@@ -98,14 +108,14 @@ class _CardScannerState extends State<CardScanner> {
                                 entitiesList[position].value,
                                 style: const TextStyle(
                                     color: Colors.white, fontSize: 18),
-                                    textAlign: TextAlign.center,
+                                textAlign: TextAlign.center,
                               ),
                             ),
                             InkWell(
                               onTap: () {
                                 Clipboard.setData(ClipboardData(
                                     text: entitiesList[position].value));
-                                SnackBar snackBar = const SnackBar(
+                                const SnackBar snackBar = SnackBar(
                                   content: Text('Copied to clipboard'),
                                 );
                                 ScaffoldMessenger.of(context)
@@ -123,53 +133,47 @@ class _CardScannerState extends State<CardScanner> {
                   );
                 },
                 itemCount: entitiesList.length,
-                physics: const NeverScrollableScrollPhysics(),
+                physics: NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
+              ),
+              Container(
+                height: 70,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: _importToDatabase,
+                        child: const Text("Import"),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final data = await DatabaseHelper().fetchAllData();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ViewDatabaseScreen(
+                                data,
+                                onDataUpdate: () async {
+                                  final updatedData =
+                                      await DatabaseHelper().fetchAllData();
+                                  setState(() {
+                                    // Cập nhật lại danh sách dữ liệu trong CardScanner
+                                    data.clear();
+                                    data.addAll(updatedData);
+                                  });
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text("View/Export"),
+                      ),
+                    ],
+                  ),
+                ),
               )
-              // Card(
-              //   margin: const EdgeInsets.all(10),
-              //   child: Column(
-              //     children: [
-              //       Container(
-              //         color: Colors.blueAccent,
-              //         child: Padding(
-              //           padding: const EdgeInsets.all(8.0),
-              //           child: Row(
-              //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //             children: [
-              //               const Icon(
-              //                 Icons.document_scanner_outlined,
-              //                 color: Colors.white,
-              //               ),
-              //               const Text(
-              //                 'Results',
-              //                 style: TextStyle(color: Colors.white),
-              //               ),
-              //               InkWell(
-              //                 onTap: () {
-              //                   Clipboard.setData(ClipboardData(text: results));
-              //                   SnackBar snackBar = const SnackBar(
-              //                     content: Text('Copied to clipboard'),
-              //                   );
-              //                   ScaffoldMessenger.of(context)
-              //                       .showSnackBar(snackBar);
-              //                 },
-              //                 child: const Icon(
-              //                   Icons.copy,
-              //                   color: Colors.white,
-              //                 ),
-              //               ),
-              //             ],
-              //           ),
-              //         ),
-              //       ),
-              //       Text(
-              //         results,
-              //         style: const TextStyle(fontSize: 18),
-              //       ),
-              //     ],
-              //   ),
-              // ),
             ],
           ),
         ),
